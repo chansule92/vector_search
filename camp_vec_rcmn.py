@@ -3,9 +3,38 @@ import sys
 import pandas as pd
 import mysql.connector
 import ast
+from openai import OpenAI
 
 DB_CONFIG = sru.DB_CONFIG
 user_req_query = '신규매장 오픈 기념 캠페인' #사용자 요청
+client = OpenAI(api_key=sru.api_key)
+system_text = """
+너는 캠페인 검색 시스템의 쿼리 확장 전문가이다.
+사용자의 검색 쿼리가 입력되면, 너는 그 쿼리를 기반으로 사용자의 잠재적인 의도와 문맥을 파악해야 한다.
+입력된 쿼리에 포함된 핵심 키워드와 연관성이 높으며, 구체적인 캠페인 속성(기간, 대상, 혜택, 유형 등)을 포함하는 5개의 새로운 검색 쿼리만을 생성해야 한다.
+
+- 생성 규칙:
+    1. 원본 쿼리를 포함하여 총 5개의 쿼리를 생성한다.
+    2. 쿼리 구분은 반드시 (!!!!)으로만 한다.
+    3. 쿼리는 최대한 구체적이어야 하며, 텍스트 임베딩 검색에 적합한 자연어 문장 형태를 포함해야 한다.
+    4. 어떠한 설명, 부연, 인사말도 없이 5개의 쿼리 텍스트만 출력한다.
+
+예시 (입력: 블랙프라이데이 캠페인):
+블랙프라이데이 캠페인
+11월 말 대규모 할인 행사
+가장 큰 할인율이 적용된 프로모션
+시즌 오프 상품 재고 판매 행사
+광고 형식으로 진행된 블랙프라이데이 이벤트
+---
+"""
+response = client.chat.completions.create(
+	model = 'gpt-4o-mini',
+	message=[
+		{'role':'system','content':system_text},
+		{'role':'user','content':user_req_query}
+		 ]
+)
+sentence = response.choices[0].message.content
 sentence = sru.request_gpt(user_req_query)  #LLM -> 사용자 요청을 문맥확장쿼리 5개 !!!! 구분자로 요청
 sentence_list=sentence.split('!!!!')  #확장쿼리 list로 분리
 all_query_results=[]
@@ -263,3 +292,4 @@ for r in mssql_cursor:
     cust_cnt.append(r)
 mssql_conn.close()
 print(cust_cnt[0][0])  #타겟팅된 고객수출력
+
