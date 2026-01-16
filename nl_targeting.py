@@ -106,4 +106,5 @@ if db_conn is not None and db_conn.is_connected():
   db_conn.close()
 empty_delete = {k: [x for x in v if x.strip()] for k, v in grouped_results.items()}
 result = {k: v for k, v in empty_delete.items() if v}
+
 print(result)
