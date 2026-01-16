@@ -98,9 +98,35 @@ for i in data:
 
 
 final_rows = []
+from openai import OpenAI
+client = OpenAI(api_key=sru.api_key)
+system_text = """
+[프롬프트] 너는 데이터 검색 시스템의 검색어 생성기야. 아래 제공된 [속성]과 [값]을 가진 데이터를 찾고 싶을 때, 사용자들이 채팅창에 입력할 법한 자연스러운 검색 문장 3개를 만들어줘.
+
+조건:
+
+반드시 해당 [값]이 포함된 데이터를 찾는 상황이어야 함 (부정형 문장 금지).
+
+조사가 틀리지 않도록 자연스러운 한국어 구어체로 작성할 것.
+
+"찾아줘", "보여줘" 같은 명령형을 섞어 다양하게 만들 것.
+
+[값]이 없다면 [속성]에 따라 적절한 기간이나 수치값을 넣을 것.
+
+입력: {속성: 가입매장 ,값: 강남점}
+
+출력 형식: 문장1!!!!문장2!!!!문장3
+"""
 for res in result:
     sample_json = {'속성': res[0], '조건값': res[2]}
-    gpt_result = sru.request_gpt(str(sample_json))
+	response = client.chat.completions.create(
+		model = 'gpt-4o-mini',
+		message=[
+			{'role':'system','content':system_text},
+			{'role':'user','content':str(sample_json)}
+			 ]
+	)
+	gpt_result = response.choices[0].message.content
     
     for seq, desc in enumerate(gpt_result.split('!!!!'), 1):
         embedding = sru.request_embedding(desc)
@@ -120,4 +146,5 @@ if final_rows:
         db_conn.commit()
 
 if db_conn and db_conn.is_connected():
+
 	db_conn.close()
