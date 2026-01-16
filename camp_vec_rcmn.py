@@ -34,8 +34,7 @@ response = client.chat.completions.create(
 		{'role':'user','content':user_req_query}
 		 ]
 )
-sentence = response.choices[0].message.content
-sentence = sru.request_gpt(user_req_query)  #LLM -> 사용자 요청을 문맥확장쿼리 5개 !!!! 구분자로 요청
+sentence = response.choices[0].message.content  #LLM -> 사용자 요청을 문맥확장쿼리 5개 !!!! 구분자로 요청
 sentence_list=sentence.split('!!!!')  #확장쿼리 list로 분리
 all_query_results=[]
 db_conn = mysql.connector.connect(**DB_CONFIG)  #벡터db연결
@@ -292,4 +291,5 @@ for r in mssql_cursor:
     cust_cnt.append(r)
 mssql_conn.close()
 print(cust_cnt[0][0])  #타겟팅된 고객수출력
+
 
